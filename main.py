@@ -3,9 +3,11 @@ import time
 from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from starlette.staticfiles import StaticFiles
+from starlette.templating import Jinja2Templates
 
 from src.database.db import get_db
-from src.routes import contacts
+from src.routes import contacts, auth
 
 app = FastAPI()
 
@@ -17,6 +19,9 @@ async def custom_middleware(request: Request, call_next):
     during = time.time() - start_time
     response.headers['performance'] = str(during)
     return response
+
+templates = Jinja2Templates(directory='templates')
+app.mount("/static", StaticFiles(directory='static'), name='static')
 
 
 @app.get("/")
@@ -38,3 +43,4 @@ def healthchecker(db: Session = Depends(get_db)):
 
 
 app.include_router(contacts.router, prefix='/api')
+app.include_router(auth.router, prefix='/api')

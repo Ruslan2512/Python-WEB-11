@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from src.database.models import Contact
 from src.chemas import ContactModel
+from src.services.auth import auth_service
 
 
 async def get_contacts(db: Session):
