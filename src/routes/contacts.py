@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import Depends, HTTPException, status, Path, APIRouter
+from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.orm import Session
 
 from src.chemas import ContactResponse, ContactModel
@@ -18,7 +19,7 @@ allowed_operation_update = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_remove = RoleAccess([Role.admin])
 
 
-@router.get("/", response_model=List[ContactResponse], dependencies=[Depends(allowed_operation_get)])
+@router.get("/", response_model=List[ContactResponse], dependencies=[Depends(allowed_operation_get), Depends(RateLimiter(times=2, seconds=5))])
 async def get_contacts(db: Session = Depends(get_db),
                        current_user: User = Depends(auth_service.get_current_user)): # Перевірка на токен, потребує авторизації
     contacts = await repository_contacts.get_contacts(db)
