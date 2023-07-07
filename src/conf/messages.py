@@ -1,0 +1,7 @@
+ACCOUNT_ALREADY_EXIST = "Account already exists"
+INVALID_EMAIL = "Invalid email"
+INVALID_PASSWORD = "Invalid password"
+INVALID_REFRESH_TOKEN = "Invalid refresh token"
+EMAIL_NOT_CONFIRMED = "Email not confirmed"
+NOT_FOUND = "Not found"
+EMAIL_IS_EXIST = "Email is exists!"

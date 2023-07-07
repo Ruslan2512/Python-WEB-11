@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import Depends, HTTPException, status, Path, APIRouter
+from fastapi import Depends, HTTPException, status, Path, APIRouter, Query
 from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,7 @@ from src.database.models import User, Role
 from src.repository import contacts as repository_contacts
 from src.services.auth import auth_service
 from src.services.roles import RoleAccess
+from src.conf import messages
 
 router = APIRouter(prefix="/contacts", tags=['contacts'])
 
@@ -19,8 +20,9 @@ allowed_operation_update = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_remove = RoleAccess([Role.admin])
 
 
-@router.get("/", response_model=List[ContactResponse], dependencies=[Depends(allowed_operation_get), Depends(RateLimiter(times=2, seconds=5))])
-async def get_contacts(db: Session = Depends(get_db),
+@router.get("/", response_model=List[ContactResponse], dependencies=[Depends(allowed_operation_get),
+                                                                     Depends(RateLimiter(times=2, seconds=5))])
+async def get_contacts(limit: int = Query(10, le=500), offset: int = 0, db: Session = Depends(get_db),
                        current_user: User = Depends(auth_service.get_current_user)): # Перевірка на токен, потребує авторизації
     contacts = await repository_contacts.get_contacts(db)
     return contacts
@@ -31,7 +33,7 @@ async def get_contacts(contact_id: int = Path(ge=1), db: Session = Depends(get_d
                        current_user: User = Depends(auth_service.get_current_user)):
     contact = await repository_contacts.get_contact_by_fullname(contact_id, db)
     if contact is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.NOT_FOUND)
     return contact
 
 
@@ -41,7 +43,7 @@ async def create_contacts(body: ContactModel, db: Session = Depends(get_db),
                           current_user: User = Depends(auth_service.get_current_user)):
     contact = await repository_contacts.get_contact_by_lastname(body.contact_id, db)
     if contact:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='Email is exists!')
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=messages.EMAIL_IS_EXIST)
 
     contact = await repository_contacts.create(body, db)
     return contact
@@ -52,7 +54,7 @@ async def update_contacts(body: ContactModel, contact_id: int = Path(ge=1), db: 
                           current_user: User = Depends(auth_service.get_current_user)):
     contact = await repository_contacts.update(contact_id, body, db)
     if contact is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.NOT_FOUND)
 
     return contact
 
@@ -62,5 +64,5 @@ async def remove_contacts(contact_id: int = Path(ge=1), db: Session = Depends(ge
                           current_user: User = Depends(auth_service.get_current_user)):
     contact = await repository_contacts.remove(contact_id, db)
     if contact is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.NOT_FOUND)
     return contact

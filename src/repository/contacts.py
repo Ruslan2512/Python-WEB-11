@@ -5,8 +5,16 @@ from src.chemas import ContactModel
 from src.services.auth import auth_service
 
 
-async def get_contacts(db: Session):
-    contacts = db.query(Contact).all()
+async def get_contacts(limit: int, offset: int, db: Session):
+    """
+    The get_contacts function returns a list of contacts from the database.
+
+    :param limit: int: Limit the number of results returned
+    :param offset: int: Specify the number of items to skip before returning results
+    :param db: Session: Pass the database session to the function
+    :return: Alist of cat objects
+    """
+    contacts = db.query(Contact).limit(limit).offset(offset).all()
     return contacts
 
 
